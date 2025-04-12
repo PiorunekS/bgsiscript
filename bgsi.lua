@@ -5,7 +5,7 @@ gui.Name = "BubbleGui"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 380)
+frame.Size = UDim2.new(0, 300, 0, 500)
 frame.Position = UDim2.new(0.3, 0, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
@@ -43,7 +43,7 @@ content.Size = UDim2.new(1, 0, 1, -30)
 content.Position = UDim2.new(0, 0, 0, 30)
 content.BackgroundTransparency = 1
 content.Parent = frame
-content.CanvasSize = UDim2.new(0, 0, 0, 500) -- Adjusted for scrollable space
+content.CanvasSize = UDim2.new(0, 0, 0, 500)
 content.ScrollBarThickness = 10
 
 local function createButton(text, posY)
@@ -59,7 +59,6 @@ local function createButton(text, posY)
     return button
 end
 
--- Buttons
 local sellOnce = createButton("Sell Bubble Gum", 5)
 local autoSell = createButton("Auto Sell Bubble Gum", 45)
 local autoBlow = createButton("Auto Blow Bubble Gum", 85)
@@ -71,8 +70,9 @@ local autoOpenMysteryBox = createButton("Auto Open Mystery Box", 285)
 local openMysteryBox = createButton("Open Mystery Box", 325)
 local autoOpenGiantChest = createButton("Auto Open GIANT Chest", 365)
 local autoOpenVoidChest = createButton("Auto Open VOID Chest", 405)
+local autoUnlockAreas = createButton("Auto Unlock Areas", 445)
+local goToZen = createButton("Go To World 'ZEN'", 485)
 
--- Toggles
 local autoSellEnabled = false
 local autoBlowEnabled = false
 local autoHatchEnabled = false
@@ -80,10 +80,10 @@ local autoClaimEnabled = false
 local autoOpenMysteryBoxEnabled = false
 local autoOpenGiantChestEnabled = false
 local autoOpenVoidChestEnabled = false
+local autoUnlockAreasEnabled = false
+local autoClaimPlaytimeEnabled = false
 
--- Remote FireServer
 local function fireEvent(...)
-
     local args = {...}
     local remote = game:GetService("ReplicatedStorage")
         :WaitForChild("Shared")
@@ -94,9 +94,7 @@ local function fireEvent(...)
     remote:FireServer(unpack(args))
 end
 
--- Remote InvokeServer
 local function invokeFunction(...)
-
     local args = {...}
     local func = game:GetService("ReplicatedStorage")
         :WaitForChild("Shared")
@@ -107,93 +105,147 @@ local function invokeFunction(...)
     func:InvokeServer(unpack(args))
 end
 
--- Function to slowly move the character to the target position with variable speed
 local function moveToPosition(targetPosition, speed)
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:WaitForChild("Humanoid")
 
-    -- Ensure we're checking for a safe position, slightly above the target Y to avoid falling into terrain
     local safeTargetPosition = Vector3.new(targetPosition.X, targetPosition.Y + 5, targetPosition.Z)
 
-    -- Move smoothly to the target position with the given speed
     local startPosition = humanoidRootPart.Position
     local distance = (startPosition - safeTargetPosition).Magnitude
-    local duration = distance / speed  -- Calculate time based on distance and speed
+    local duration = distance / speed
 
-    -- Perform the smooth movement by updating the position over time
     local elapsedTime = 0
     while elapsedTime < duration do
         local newPosition = startPosition:Lerp(safeTargetPosition, elapsedTime / duration)
         humanoidRootPart.CFrame = CFrame.new(newPosition)
-        elapsedTime = elapsedTime + game:GetService("RunService").Heartbeat:Wait()  -- Wait until the next frame for smoother movement
+        elapsedTime = elapsedTime + game:GetService("RunService").Heartbeat:Wait()
     end
 
-    -- Ensure the character ends at the target position
     humanoidRootPart.CFrame = CFrame.new(safeTargetPosition)
 end
 
--- Rainbow Egg Position (where the character should move to for hatching)
 local rainbowEggPosition = Vector3.new(-36, 15972, 44)
-
--- GIANT Chest Position (where the character should move to)
 local giantChestPosition = Vector3.new(10, 428, 151)
-
--- Void Chest Position (where the character should move to)
 local voidChestPosition = Vector3.new(78, 10148, 52)
+local unlockAreasPosition = Vector3.new(3, 15973, 45)
+local zenPosition = "Workspace.Worlds.The Overworld.Islands.Zen.Island.Portal.Spawn"
 
--- Auto Hatch Rainbow Egg (with smooth flying to the target position at 2000x speed)
+autoSell.MouseButton1Click:Connect(function()
+    fireEvent("SellBubbleGum")
+end)
+
+autoBlow.MouseButton1Click:Connect(function()
+    autoBlowEnabled = not autoBlowEnabled
+    autoBlow.Text = autoBlowEnabled and "Stop Auto Blow" or "Auto Blow Bubble Gum"
+    if autoBlowEnabled then
+        coroutine.wrap(function()
+            while autoBlowEnabled do
+                fireEvent("BlowBubble")
+                wait(1)
+            end
+        end)()
+    end
+end)
+
+sellOnce.MouseButton1Click:Connect(function()
+    fireEvent("SellBubble")
+end)
+
+autoSell.MouseButton1Click:Connect(function()
+    autoSellEnabled = not autoSellEnabled
+    autoSell.Text = autoSellEnabled and "Stop Auto Sell" or "Auto Sell Bubble Gum"
+    if autoSellEnabled then
+        coroutine.wrap(function()
+            while autoSellEnabled do
+                fireEvent("SellBubble")
+                wait(2)
+            end
+        end)()
+    end
+end)
+
 autoHatch.MouseButton1Click:Connect(function()
     autoHatchEnabled = not autoHatchEnabled
     autoHatch.Text = autoHatchEnabled and "Stop Auto Hatch" or "Auto Hatch Rainbow Egg"
     if autoHatchEnabled then
         coroutine.wrap(function()
             while autoHatchEnabled do
-                -- Move the player smoothly to the rainbow egg position and hatch it at 2000x speed
-                moveToPosition(rainbowEggPosition, 2000)  -- 2000 speed (2000x speed)
-                wait(2)  -- Ensure the player has arrived before interacting with the egg
+                moveToPosition(rainbowEggPosition, 2000)
+                wait(2)
                 fireEvent("HatchEgg", "Rainbow Egg", 1)
-                wait(5)  -- Wait for the next hatch
+                wait(5)
             end
         end)()
     end
 end)
 
--- GIANT Chest Auto Opening logic (with smooth flying to the target position at 100x speed)
 autoOpenGiantChest.MouseButton1Click:Connect(function()
     autoOpenGiantChestEnabled = not autoOpenGiantChestEnabled
     autoOpenGiantChest.Text = autoOpenGiantChestEnabled and "Stop Auto Open GIANT Chest" or "Auto Open GIANT Chest"
     if autoOpenGiantChestEnabled then
         coroutine.wrap(function()
             while autoOpenGiantChestEnabled do
-                -- Move the player smoothly to the giant chest position and open it at 100x speed
-                moveToPosition(giantChestPosition, 50)  -- 50 speed (100x speed)
-                wait(2)  -- Ensure the player has arrived before interacting with the chest
+                moveToPosition(giantChestPosition, 100)
+                wait(2)
                 fireEvent("ClaimChest", "Giant Chest")
-                wait(5)  -- Wait for the next interaction
+                wait(5)
             end
         end)()
     end
 end)
 
--- Void Chest Auto Opening logic (with smooth flying to the target position at 2000x speed)
 autoOpenVoidChest.MouseButton1Click:Connect(function()
     autoOpenVoidChestEnabled = not autoOpenVoidChestEnabled
     autoOpenVoidChest.Text = autoOpenVoidChestEnabled and "Stop Auto Open VOID Chest" or "Auto Open VOID Chest"
     if autoOpenVoidChestEnabled then
         coroutine.wrap(function()
             while autoOpenVoidChestEnabled do
-                -- Move the player smoothly to the void chest position and open it at 2000x speed
-                moveToPosition(voidChestPosition, 1000)  -- 1000 speed (2000x speed)
-                wait(2)  -- Ensure the player has arrived before interacting with the chest
+                moveToPosition(voidChestPosition, 2000)
+                wait(2)
                 fireEvent("ClaimChest", "Void Chest")
-                wait(5)  -- Wait for the next interaction
+                wait(5)
             end
         end)()
     end
 end)
 
--- Other button functionalities here (not modified) ...
+autoUnlockAreas.MouseButton1Click:Connect(function()
+    autoUnlockAreasEnabled = not autoUnlockAreasEnabled
+    autoUnlockAreas.Text = autoUnlockAreasEnabled and "Stop Auto Unlock Areas" or "Auto Unlock Areas"
+    if autoUnlockAreasEnabled then
+        coroutine.wrap(function()
+            while autoUnlockAreasEnabled do
+                moveToPosition(unlockAreasPosition, 2000)
+                wait(2)
+                fireEvent("UnlockAreas")
+                wait(5)
+            end
+        end)()
+    end
+end)
+
+goToZen.MouseButton1Click:Connect(function()
+    local args = {
+        [1] = "Teleport",
+        [2] = zenPosition
+    }
+    game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
+end)
+
+claimPlaytime.MouseButton1Click:Connect(function()
+    coroutine.wrap(function()
+        for i = 1, 9 do
+            local args = {
+                [1] = "ClaimPlaytime",
+                [2] = i
+            }
+            game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
+            wait(10)  -- Wait for 10 seconds before claiming the next reward
+        end
+    end)()
+end)
 
 minimize.MouseButton1Click:Connect(function()
     content.Visible = not content.Visible

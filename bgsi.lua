@@ -71,7 +71,6 @@ local autoOpenMysteryBox = createButton("Auto Open Mystery Box", 285)
 local openMysteryBox = createButton("Open Mystery Box", 325)
 local autoOpenGiantChest = createButton("Auto Open GIANT Chest", 365)
 local autoOpenVoidChest = createButton("Auto Open VOID Chest", 405)
-local autoUnlockAreas = createButton("Auto Unlock Areas", 445)  -- New button for unlocking areas
 
 -- Toggles
 local autoSellEnabled = false
@@ -81,7 +80,6 @@ local autoClaimEnabled = false
 local autoOpenMysteryBoxEnabled = false
 local autoOpenGiantChestEnabled = false
 local autoOpenVoidChestEnabled = false
-local autoUnlockAreasEnabled = false  -- Toggle for the new button
 
 -- Remote FireServer
 local function fireEvent(...)
@@ -135,22 +133,60 @@ local function moveToPosition(targetPosition, speed)
     humanoidRootPart.CFrame = CFrame.new(safeTargetPosition)
 end
 
--- Auto Unlock Areas Position (where the character should move to for unlocking areas)
-local unlockAreasPosition = Vector3.new(3, 15973, 45)
+-- Rainbow Egg Position (where the character should move to for hatching)
+local rainbowEggPosition = Vector3.new(-36, 15972, 44)
 
--- Auto Unlock Areas Logic (with smooth flying to the target position at 2000x speed)
-autoUnlockAreas.MouseButton1Click:Connect(function()
-    autoUnlockAreasEnabled = not autoUnlockAreasEnabled
-    autoUnlockAreas.Text = autoUnlockAreasEnabled and "Stop Auto Unlock Areas" or "Auto Unlock Areas"
-    if autoUnlockAreasEnabled then
+-- GIANT Chest Position (where the character should move to)
+local giantChestPosition = Vector3.new(10, 428, 151)
+
+-- Void Chest Position (where the character should move to)
+local voidChestPosition = Vector3.new(78, 10148, 52)
+
+-- Auto Hatch Rainbow Egg (with smooth flying to the target position at 2000x speed)
+autoHatch.MouseButton1Click:Connect(function()
+    autoHatchEnabled = not autoHatchEnabled
+    autoHatch.Text = autoHatchEnabled and "Stop Auto Hatch" or "Auto Hatch Rainbow Egg"
+    if autoHatchEnabled then
         coroutine.wrap(function()
-            while autoUnlockAreasEnabled do
-                -- Move the player smoothly to the unlock areas position at 2000x speed
-                moveToPosition(unlockAreasPosition, 2000)  -- 2000 speed (2000x speed)
-                wait(2)  -- Ensure the player has arrived before interacting
-                -- Add your code here for unlocking areas or interacting if necessary
-                -- For example, if there's a specific function to unlock areas, use it here
-                fireEvent("UnlockAreas")  -- Assuming "UnlockAreas" is the event to unlock areas
+            while autoHatchEnabled do
+                -- Move the player smoothly to the rainbow egg position and hatch it at 2000x speed
+                moveToPosition(rainbowEggPosition, 2000)  -- 2000 speed (2000x speed)
+                wait(2)  -- Ensure the player has arrived before interacting with the egg
+                fireEvent("HatchEgg", "Rainbow Egg", 1)
+                wait(5)  -- Wait for the next hatch
+            end
+        end)()
+    end
+end)
+
+-- GIANT Chest Auto Opening logic (with smooth flying to the target position at 100x speed)
+autoOpenGiantChest.MouseButton1Click:Connect(function()
+    autoOpenGiantChestEnabled = not autoOpenGiantChestEnabled
+    autoOpenGiantChest.Text = autoOpenGiantChestEnabled and "Stop Auto Open GIANT Chest" or "Auto Open GIANT Chest"
+    if autoOpenGiantChestEnabled then
+        coroutine.wrap(function()
+            while autoOpenGiantChestEnabled do
+                -- Move the player smoothly to the giant chest position and open it at 100x speed
+                moveToPosition(giantChestPosition, 50)  -- 50 speed (100x speed)
+                wait(2)  -- Ensure the player has arrived before interacting with the chest
+                fireEvent("ClaimChest", "Giant Chest")
+                wait(5)  -- Wait for the next interaction
+            end
+        end)()
+    end
+end)
+
+-- Void Chest Auto Opening logic (with smooth flying to the target position at 2000x speed)
+autoOpenVoidChest.MouseButton1Click:Connect(function()
+    autoOpenVoidChestEnabled = not autoOpenVoidChestEnabled
+    autoOpenVoidChest.Text = autoOpenVoidChestEnabled and "Stop Auto Open VOID Chest" or "Auto Open VOID Chest"
+    if autoOpenVoidChestEnabled then
+        coroutine.wrap(function()
+            while autoOpenVoidChestEnabled do
+                -- Move the player smoothly to the void chest position and open it at 2000x speed
+                moveToPosition(voidChestPosition, 1000)  -- 1000 speed (2000x speed)
+                wait(2)  -- Ensure the player has arrived before interacting with the chest
+                fireEvent("ClaimChest", "Void Chest")
                 wait(5)  -- Wait for the next interaction
             end
         end)()
